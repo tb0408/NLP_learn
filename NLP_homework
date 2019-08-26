@@ -1,0 +1,221 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug 26 16:35:17 2019
+0822作业函数化
+@author: 佟博
+"""
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Aug 24 16:00:41 2019
+
+@author: T
+"""
+
+import re
+import jieba
+import pickle
+import copy
+import jieba.posseg as pseg
+import nltk
+
+
+def del_space(file):
+    text_word = []
+    for i in range(len(file)):
+        text_word.append(file[i])
+    for i in range(len(text_word)-1,-1,-1):
+        if text_word[i] == '':
+            del text_word[i]
+            continue
+        else:
+            pass
+        T= list(text_word[i])
+        for h in range(len(text_word[i])-1,-1,-1):
+            if T[h] in ' ：、“”’‘0123456789' :
+               del T[h]
+            else:
+               continue
+        text_word[i] = ''.join(T)
+    return text_word
+
+def separate_sentence(text_word):
+    sentences = []
+    for i in range(len(text_word)):
+        paragraph = text_word[i]
+        sentences_i = re.split('(。|！|\!|\.|？|\?|；|\;|，)',paragraph) 
+        sentences = sentences + sentences_i
+    for i in range(len(sentences)-1,-1,-1):
+        if sentences[i] in '(。|！!.？?-（）；\;，)':
+            del sentences[i]
+        else:
+            continue
+    return sentences
+
+def separate_words(sentences):
+    add_word = ['500强','碧桂园','千亿房企']
+    for i in add_word:
+        jieba.add_word(i,freq=None,tag=None)  
+    words = []
+    #cixing = []
+    
+    for i in range(len(sentences)):
+        words_i = jieba.lcut(sentences[i])
+    #    T_words = []
+    #    T_cixing = []
+    #    for i_2 in range(len(words_i)):
+    #        T_words.append(words_i[i_2].word)
+    #        T_cixing.append(words_i[i_2].flag)
+        words.append(words_i)
+    #    cixing.append(T_cixing)
+    for i in add_word:
+        jieba.del_word(i)  
+    return words
+
+def pseg_words(sentences):
+    T_cixing = []
+    cixing = []
+    pseg_words = []
+    for i in range(len(words)):
+        T_3 = []
+        T_4 = []
+        for i_2 in range(len(words[i])):
+            T_cixing = pseg.lcut(words[i][i_2])
+            T_1 = []
+            T_2 = []
+            for i_3 in T_cixing:
+                T_1.append(i_3.word)
+                T_2.append(i_3.flag)
+            T_3 = T_3 + T_1
+            T_4 = T_4 + T_2
+        cixing.append(T_4)
+        pseg_words.append(T_3)
+    return pseg_words,cixing
+
+def del_low_frequence(words,threshold_f):
+    all_words = []
+    for i in words:
+        all_words = all_words + i
+        
+    word_f = nltk.FreqDist(all_words)
+    word_f_sorted = sorted(word_f.items(), key = lambda x: x[1], reverse=False)
+    #~~~~~~~~~~~~~~~~~~~~~~频率阈值
+    
+    threshold_f = 0
+    del_words = []
+    for i in word_f_sorted:
+        if int(i[1]) <= threshold_f:
+            del_words.append(i[0])
+        else:
+            continue
+    return del_words
+
+def del_and_replace(words,del_words,sensitive_words,stop,special_symbol):
+    for i_1 in range(len(words)-1,-1,-1):
+        for i_2 in range(len(words[i_1])-1,-1,-1):
+            if str(words[i_1][i_2]) in special_symbol:
+                del words[i_1][i_2]
+            elif str(words[i_1][i_2]) in del_words:
+                del words[i_1][i_2]
+            elif str(words[i_1][i_2]) in stop:
+                del words[i_1][i_2]
+            elif str(words[i_1][i_2]) in sensitive_words:
+                words[i_1][i_2] = '**'
+            else:
+                continue
+    return words
+
+def fixed_sentence(words,len_sentence,symol_completion):
+    count_sentence = []
+    for i in words:
+        count_sentence.append(len(i))
+    result = []
+    T=[]
+    for i in range(len(words)):
+        T=[]
+        for i_2 in range(len_sentence):
+            try:
+                T.append(words[i][i_2])
+            except:
+                T.append(symol_completion)
+        result.append(T)
+    return result
+
+def add_ID(pseg_words,cixing):
+    words_dict = {}
+    cixing_dict = {}
+    C = 0
+    for i in range(len(pseg_words)):
+        for i_2 in range(len(pseg_words[i])):
+            C = C+1
+            words_dict[pseg_words[i][i_2]] = C
+#            cixing_dict[str(i)+'_'+str(i_2)] = cixing[i][i_2]
+            
+            cixing_dict[cixing[i][i_2]] = C
+    return words_dict,cixing_dict
+
+if __name__ == '__main__':
+#~~~~~~~~~~~~~~~~~~~~~~~导入主doc
+    with open("C:\\Users\\15850\\Desktop\\NLP\\作业_0822.txt") as f:
+        file = f.readlines()
+#~~~~~~~~~~~~~~~~~~~~~~~预处理1：去除空格，空行
+    text_word = del_space(file)
+#~~~~~~~~~~~~~~~~~~~~~~~预处理2：分句
+    sentences = separate_sentence(text_word)
+#~~~~~~~~~~~~~~~~~~~~~~~预处理3：分词
+    words = separate_words(sentences)
+
+#~~~~~~~~~~~~~~~~~~~~~~~预处理4：去低频词、停用词、特殊符号
+#~~~~~~~~~~~~~~~~~~~~~~~载入停用词库
+    stop = open('C:\\Users\\15850\\Desktop\\NLP\\停用词库.txt').readlines()
+    for i in range(len(stop)) :
+       stop[i]=stop[i].strip('\n')
+
+#~~~~~~~~~~~~~~~~~~~~~~~载入特殊符号库
+    special_symbol = open('C:\\Users\\15850\\Desktop\\NLP\\特殊符号.txt').readlines()
+    for i in range(len(special_symbol)) :
+       special_symbol[i]=special_symbol[i].strip('\n')# 删除\n
+       
+#~~~~~~~~~~~~~~~~~~~~~~~获取低频词库
+    threshold_f = 0
+    del_words = del_low_frequence(words,threshold_f)
+#~~~~~~~~~~~~~~~~~~~~~~载入敏感词库
+    sensitive_words = open('C:\\Users\\15850\\Desktop\\NLP\\禁词.txt').readlines()
+    for i in range(len(sensitive_words)) :
+       sensitive_words[i]=sensitive_words[i].strip('\n')
+   
+#~~~~~~~~~~~~~~~~~~~~~删除停用词，低频词和替换敏感词
+    words = del_and_replace(words,del_words,sensitive_words,stop,special_symbol)
+#~~~~~~~~~~~~~~~~~~~~~预处理5：二次分词，获得词性
+    words,cixing = pseg_words(words)
+#~~~~~~~~~~~~~~~~~~~~~~~预处理6：固定长度
+    len_sentence = 30
+    symol_completion = '00'
+    result = fixed_sentence(words,len_sentence,symol_completion)
+#~~~~~~~~~~~~~~~~~~~~~~~预处理7:制作字典
+    words_dict,cixing_dict = add_ID(words,cixing)
+    result_words = copy.deepcopy(words)
+    result_cixing = copy.deepcopy(cixing)
+    for i in range(len(result_words)):
+        for i_2 in range(len(result_words[i])):
+            result_words[i][i_2] = words_dict[result_words[i][i_2]]
+            result_cixing[i][i_2] = cixing_dict[result_cixing[i][i_2]]
+
+
+df2 = open('C:\\Users\\15850\\Desktop\\NLP\\words_dict.txt','wb')
+df3 = open('C:\\Users\\15850\\Desktop\\NLP\\cixing_dict.txt','wb')
+
+pickle.dump(result_words,df2)
+pickle.dump(result_cixing,df3)
+df2.close()
+df3.close()
+
+
+
+df=open('C:\\Users\\15850\\Desktop\\NLP\\words_dict.txt','rb')#注意此处是rb
+data3=pickle.load(df)
+df.close()
+df2=open('C:\\Users\\15850\\Desktop\\NLP\\cixing_dict.txt','rb')#注意此处是rb
+data4=pickle.load(df2)
+df2.close()
+
+
