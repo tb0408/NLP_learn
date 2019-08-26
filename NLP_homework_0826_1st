@@ -51,8 +51,8 @@ def separate_sentence(text_word):
             continue
     return sentences
 
-def separate_words(sentences):
-    add_word = ['500强','碧桂园','千亿房企']
+def separate_words(sentences,special_words):
+    add_word = special_words    
     for i in add_word:
         jieba.add_word(i,freq=None,tag=None)  
     words = []
@@ -160,9 +160,11 @@ if __name__ == '__main__':
 #~~~~~~~~~~~~~~~~~~~~~~~预处理1：去除空格，空行
     text_word = del_space(file)
 #~~~~~~~~~~~~~~~~~~~~~~~预处理2：分句
+    
     sentences = separate_sentence(text_word)
 #~~~~~~~~~~~~~~~~~~~~~~~预处理3：分词
-    words = separate_words(sentences)
+    special_words =  ['500强','碧桂园','千亿房企']
+    words = separate_words(sentences,special_words)
 
 #~~~~~~~~~~~~~~~~~~~~~~~预处理4：去低频词、停用词、特殊符号
 #~~~~~~~~~~~~~~~~~~~~~~~载入停用词库
