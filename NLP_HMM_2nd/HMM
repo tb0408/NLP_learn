@@ -57,21 +57,21 @@ for i in range(sentence_len)[1:]:
         if emitter_pro_matrix[vocab_map[sentence_list[i]], j] < 0.00001:
             continue
         #获取前一个词的词性概率
-        pre_cixing_pro = pro_table[i-1, :, 0] 
+        cixing_pro = pro_table[i-1, :, 0] 
         #乘以转移概率矩阵
-        pre_cixing_pro *= trans_pro_matrix[j] 
+        cixing_pro *= trans_pro_matrix[j] 
         #乘以发射概率矩阵
-#        print(np.max(pre_cixing_pro))
-        pre_cixing_pro *= emitter_pro_matrix[vocab_map[sentence_list[i]], j]
+        
+        cixing_pro *= emitter_pro_matrix[vocab_map[sentence_list[i]], j]
         # 保留最大可能的词性的路径
-        pro_table[i, j, 0] = np.max(pre_cixing_pro)
-        pro_table[i, j, 1] = np.where(pre_cixing_pro == np.max(pre_cixing_pro))[0][0]
+        pro_table[i, j, 0] = np.max(cixing_pro)
+        pro_table[i, j, 1] = np.where(cixing_pro == np.max(cixing_pro))[0][0]
 #        print(np.where(pre_cixing_pro == np.max(pre_cixing_pro))[0][0],'~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 result_cixing_map = []
-
+#       维特比算法开始逆向搜寻最短路径
 sy = int(np.where(pro_table[-1, :, 0] == np.max(pro_table[-1, :, 0]))[0][0])
 t = -1
-
+#       问题：为什么这里要逆向搜寻
 while sy != -1:
     result_cixing_map.append(sy)
     print(pro_table[t, sy, 1])
