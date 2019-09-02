@@ -1,0 +1,95 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Aug 27 19:19:36 2019
+
+@author: 佟博
+NLP第二次作业
+"""
+
+import re
+import pickle
+import numpy as np
+import copy
+
+with open("C:\\Users\\15850\\Desktop\\NLP第二次作业\\traindata.txt") as f:
+    text = f.readlines()
+#预处理
+text_word = []
+text_PoS  = []
+for i in range(len(text)):
+    if text[i][0] in ',{}[]($%-^#&@!*). \'`0123456789，。:?;':
+        continue
+    else:
+#        text[i] = text[i].rstrip('\n')
+        text[i] = re.sub('[ |,|.|$]','',text[i])
+        text_word.append(text[i][:text[i].index('/')])
+        text_PoS.append(text[i][text[i].index('/')+1:])
+dict_word = {}
+dict_PoS  = {}
+#获取词性和单词字典
+for i in range(len(text_word)):
+    dict_word[text_word[i]] = i
+    dict_PoS[text_PoS[i]] = i
+
+c = 0
+for i in list(dict_word.keys()):
+    dict_word[i] = c
+    c = c+1
+
+c = 0
+for i in list(dict_PoS.keys()):
+    dict_PoS[i] = c
+    c = c+1
+    
+#获取转移矩阵
+trans_pro_matrix = np.zeros((43,43))
+emitter_pro_matrix = np.zeros((len(dict_word),len(dict_PoS)))
+for i_1 in range(len(text_PoS)-1):
+    i_2 = i_1+1
+    Pos_1 = text_PoS[i_1]
+    Pos_2 = text_PoS[i_2]
+    x = dict_PoS[text_PoS[i_2]]
+    y = dict_PoS[text_PoS[i_1]]
+    trans_pro_matrix[x][y]+=1
+#频数转概率
+Temp_record_t = copy.deepcopy(trans_pro_matrix)
+for i_1 in range(trans_pro_matrix.shape[0]):
+    for i_2 in range(trans_pro_matrix.shape[1]):
+        Temp_record_t[i_1,i_2] = trans_pro_matrix[i_1,i_2]/(sum(trans_pro_matrix[:,i_2]))
+
+#获取发射矩阵
+for i in  range(len(text_word)):
+    q = dict_word[text_word[i]]
+    p = dict_PoS[text_PoS[i]]
+    emitter_pro_matrix[q][p]+=1
+#频数转概率
+Temp_record_e = copy.deepcopy(emitter_pro_matrix)
+for i_1 in range(emitter_pro_matrix.shape[0]):
+    print(i_1)
+    for i_2 in range(emitter_pro_matrix.shape[1]):
+        Temp_record_e[i_1,i_2] = emitter_pro_matrix[i_1,i_2]/(sum(emitter_pro_matrix[:,i_2]))
+#保存为pickle
+df1 = open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\A.txt','wb')
+df2 = open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\B.txt','wb')
+#df3 = open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\Pi.txt','wb')
+df4 = open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\dict_Pos.txt','wb')
+df5 = open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\dict_word.txt','wb')
+df6 = open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\text_Pos.txt','wb')
+df7 = open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\text_word.txt','wb')
+
+pickle.dump(Temp_record_t,df1)
+pickle.dump(Temp_record_e,df2)
+#pickle.dump(P,df3)
+pickle.dump(dict_PoS,df4)
+pickle.dump(dict_word,df5)
+pickle.dump(text_PoS,df6)
+pickle.dump(text_word,df7)
+
+
+df1.close()
+df2.close()
+#df3.close()
+df4.close()
+df5.close()
+df6.close()
+df7.close()
