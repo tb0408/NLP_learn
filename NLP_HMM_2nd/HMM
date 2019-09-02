@@ -1,0 +1,88 @@
+# -*- coding: utf-8 -*-
+
+"""
+Created on Mon Sep  2 14:48:43 2019
+@author: T
+"""
+import numpy as np
+import copy
+import pickle
+
+"""
+初始化 HMM词性标注算法
+:return:
+"""
+df1=open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\A.txt','rb')#注意此处是rb
+trans_pro_matrix=pickle.load(df1)
+df2=open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\B.txt','rb')#注意此处是rb
+emitter_pro_matrix=pickle.load(df2)
+df3=open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\dict_Pos.txt','rb')#注意此处是rb
+cixing_map=pickle.load(df3)
+df4=open('C:\\Users\\15850\\Desktop\\NLP第二次作业\\data\\dict_word.txt','rb')#注意此处是rb
+vocab_map=pickle.load(df4)
+#防止出现为0的情况无法比较
+for i_1 in range(emitter_pro_matrix.shape[0]):
+    for i_2 in range(emitter_pro_matrix.shape[1]):
+        if emitter_pro_matrix[i_1][i_2] == 0:
+            emitter_pro_matrix[i_1][i_2] = 0.00000001
+for i_1 in range(trans_pro_matrix.shape[0]):
+    for i_2 in range(trans_pro_matrix.shape[1]):
+        if trans_pro_matrix[i_1][i_2] == 0:
+            trans_pro_matrix[i_1][i_2] = 0.00000001
+
+df1.close()
+df2.close()
+df3.close()
+df4.close()
+
+
+def get_key(dict, value):
+    return [k for k, v in dict.items() if v == value]
+#初始化值，获取各项参数
+sentence_list = ['I', 'eat', 'a','so','big', 'apple']
+sentence_list = list(sentence_list)
+sentence_len = len(sentence_list)
+cixing_len = len(cixing_map)  
+
+pro_table = np.zeros((sentence_len, cixing_len, 2))
+#首词概率矩阵，在此直接选用发射矩阵，应该是发射矩阵乘以首词概率矩阵，但是涉及分句问题，有疑惑，所以先用发射矩阵
+pro_table[0, :, 0] = emitter_pro_matrix[vocab_map[sentence_list[0]]]
+#给首词一个-1对的标号
+pro_table[0, :, 1] = -1
+#开始计算概率矩阵
+for i in range(sentence_len)[1:]:
+    print(sentence_list[i])
+    for j in range(cixing_len):
+        #如果该词在第j个词性下概率为0，则直接跳过
+        if emitter_pro_matrix[vocab_map[sentence_list[i]], j] < 0.00001:
+            continue
+        #获取前一个词的词性概率
+        pre_cixing_pro = pro_table[i-1, :, 0] 
+        #乘以转移概率矩阵
+        pre_cixing_pro *= trans_pro_matrix[j] 
+        #乘以发射概率矩阵
+#        print(np.max(pre_cixing_pro))
+        pre_cixing_pro *= emitter_pro_matrix[vocab_map[sentence_list[i]], j]
+        # 保留最大可能的词性的路径
+        pro_table[i, j, 0] = np.max(pre_cixing_pro)
+        pro_table[i, j, 1] = np.where(pre_cixing_pro == np.max(pre_cixing_pro))[0][0]
+#        print(np.where(pre_cixing_pro == np.max(pre_cixing_pro))[0][0],'~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+result_cixing_map = []
+
+sy = int(np.where(pro_table[-1, :, 0] == np.max(pro_table[-1, :, 0]))[0][0])
+t = -1
+
+while sy != -1:
+    result_cixing_map.append(sy)
+    print(pro_table[t, sy, 1])
+    sy = int(pro_table[t, sy, 1])
+    t -= 1
+result_cixing = []
+print(result_cixing_map)
+for s in result_cixing_map[::-1]:
+    result_cixing.append(get_key(cixing_map, s))
+for i in range(len(result_cixing)):
+    result_cixing[i] = result_cixing[i][0].strip()
+
+print(result_cixing)
+
