@@ -71,7 +71,7 @@ result_cixing_map = []
 #       维特比算法开始逆向搜寻最短路径
 sy = int(np.where(pro_table[-1, :, 0] == np.max(pro_table[-1, :, 0]))[0][0])
 t = -1
-#       问题：为什么这里要逆向搜寻
+#       问题：为什么这里要逆向搜寻，在建立概率矩阵的时候是正向的
 while sy != -1:
     result_cixing_map.append(sy)
     print(pro_table[t, sy, 1])
