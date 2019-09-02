@@ -68,18 +68,20 @@ for i in range(sentence_len)[1:]:
         pro_table[i, j, 1] = np.where(cixing_pro == np.max(cixing_pro))[0][0]
 #        print(np.where(pre_cixing_pro == np.max(pre_cixing_pro))[0][0],'~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 result_cixing_map = []
-#       维特比算法开始逆向搜寻最短路径
+#       维特比算法开始逆向搜寻最短路径，逆向搜索时用倒序
 sy = int(np.where(pro_table[-1, :, 0] == np.max(pro_table[-1, :, 0]))[0][0])
 t = -1
-#       问题：为什么这里要逆向搜寻，在建立概率矩阵的时候是正向的
+#       逆向搜索时用倒序可以最方便找到路径
 while sy != -1:
     result_cixing_map.append(sy)
     print(pro_table[t, sy, 1])
     sy = int(pro_table[t, sy, 1])
     t -= 1
+#       调换顺序，直接输出
+result_cixing_map.reverse()
 result_cixing = []
 print(result_cixing_map)
-for s in result_cixing_map[::-1]:
+for s in result_cixing_map:
     result_cixing.append(get_key(cixing_map, s))
 for i in range(len(result_cixing)):
     result_cixing[i] = result_cixing[i][0].strip()
