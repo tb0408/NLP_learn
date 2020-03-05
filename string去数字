@@ -1,0 +1,8 @@
+from string import digits
+ 
+def delnum(s):
+    remove_digits = str.maketrans('', '', digits)
+    res = s.translate(remove_digits)
+    return res
+string = '搜到金佛is将佛法讲sfdsf546sdfs1十点多61'
+string = delnum(string)
